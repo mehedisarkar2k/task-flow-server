@@ -41,3 +41,11 @@ export const globalErrorHandler = (
     message: 'Internal server error',
   });
 };
+
+export const notFoundHandler = (req: Request, res: Response, next: NextFunction) => {
+  const error = new AppError(
+    `Can't find ${req.originalUrl} on this server!`,
+    HTTP_STATUS.NOT_FOUND
+  );
+  next(error);
+};

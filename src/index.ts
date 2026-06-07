@@ -1,27 +1,41 @@
-import cors from "cors";
-import dotenv from "dotenv";
-import express from "express";
-import helmet from "helmet";
-import mongoose from "mongoose";
+import cors from 'cors';
+import 'dotenv/config';
+import express from 'express';
+import helmet from 'helmet';
+import { toNodeHandler } from 'better-auth/node';
 
-dotenv.config();
+import { auth } from './config/auth';
+import { globalErrorHandler, notFoundHandler } from './middleware/error.middleware';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || "";
 
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    credentials: true, // Needed for Better Auth cookies
+  })
+);
 app.use(express.json());
 
-mongoose
-    .connect(MONGO_URI)
-    .then(() => {
-        console.log("Connected to MongoDB");
-        app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
-        });
-    })
-    .catch((error) => {
-        console.error("Error connecting to MongoDB:", error);
-    });
+// ---------------------------------------------------------
+// BETTER AUTH (Express v5 wildcard syntax)
+// ---------------------------------------------------------
+app.all('/api/auth/{*any}', toNodeHandler(auth.handler));
+
+// ---------------------------------------------------------
+// API ROUTES (To be implemented)
+// ---------------------------------------------------------
+// app.use("/api/projects", projectRoutes);
+// app.use("/api/tasks", taskRoutes);
+
+// ---------------------------------------------------------
+// ERROR HANDLING
+// ---------------------------------------------------------
+app.use(notFoundHandler);
+app.use(globalErrorHandler);
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
