@@ -8,7 +8,7 @@ import { auth } from './config/auth';
 import { globalErrorHandler, notFoundHandler } from './middleware/error.middleware';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 app.use(helmet());
 app.use(
@@ -17,12 +17,16 @@ app.use(
     credentials: true, // Needed for Better Auth cookies
   })
 );
-app.use(express.json());
 
 // ---------------------------------------------------------
-// BETTER AUTH (Express v5 wildcard syntax)
+// BETTER AUTH
+// Must be registered BEFORE express.json() to avoid body
+// parser consuming the request stream first.
+// Express v5 requires {*any} wildcard syntax.
 // ---------------------------------------------------------
-app.all('/api/auth/{*any}', toNodeHandler(auth.handler));
+app.all('/api/auth/{*any}', toNodeHandler(auth));
+
+app.use(express.json());
 
 // ---------------------------------------------------------
 // API ROUTES (To be implemented)
