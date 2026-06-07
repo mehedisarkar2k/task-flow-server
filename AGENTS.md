@@ -35,8 +35,10 @@ src/modules/<feature>/
 ├── <feature>.service.ts
 ├── <feature>.repository.ts
 ├── <feature>.routes.ts
-├── <feature>.validation.ts
 └── <feature>.types.ts
+
+And schemas live in:
+`src/shared/schemas/<feature>.schema.ts`
 ```
 
 ### Dependency Direction (NEVER violate)
@@ -106,7 +108,7 @@ Look at how existing modules are structured. Match:
 ### Validation
 
 - Every endpoint validates input with Zod.
-- Schemas live in `<feature>.validation.ts`.
+- Schemas live in `src/shared/schemas/<feature>.schema.ts`.
 - Use `validate()` middleware in routes.
 - Never trust client input.
 

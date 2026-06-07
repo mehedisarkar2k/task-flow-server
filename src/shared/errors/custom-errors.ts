@@ -1,4 +1,4 @@
-import { AppError } from './app-error';
+import { AppError, FieldError } from './app-error';
 import { HTTP_STATUS } from '../constants/http-status';
 
 export class NotFoundError extends AppError {
@@ -8,7 +8,7 @@ export class NotFoundError extends AppError {
 }
 
 export class ValidationError extends AppError {
-  constructor(message = 'Validation failed', errors?: any[], instructions?: string[]) {
+  constructor(message = 'Validation failed', errors?: FieldError[], instructions?: string[]) {
     super(message, HTTP_STATUS.UNPROCESSABLE_ENTITY, errors, instructions);
   }
 }
@@ -32,7 +32,7 @@ export class ConflictError extends AppError {
 }
 
 export class BadRequestError extends AppError {
-  constructor(message = 'Bad request', errors?: any[], instructions?: string[]) {
+  constructor(message = 'Bad request', errors?: FieldError[], instructions?: string[]) {
     super(message, HTTP_STATUS.BAD_REQUEST, errors, instructions);
   }
 }

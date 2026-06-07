@@ -31,9 +31,9 @@ Do not introduce alternative libraries unless explicitly requested.
 ```
 src/
 ├── modules/          # Feature-based modules
-├── shared/           # Shared errors, utils, types, constants
+├── shared/           # Shared errors, utils, types, constants, schemas
 ├── config/           # Database, auth, cloudflare, env configs
-├── middleware/        # Auth, role, error, validate, upload middleware
+├── middleware/       # Auth, role, error, validate, upload middleware
 ├── events/           # Event emitter, notification events, activity events
 └── index.ts          # Express app entry
 ```
@@ -52,7 +52,6 @@ src/modules/project/
 ├── project.service.ts        # Business logic
 ├── project.repository.ts     # Database access only
 ├── project.routes.ts         # Route definitions
-├── project.validation.ts     # Zod schemas
 └── project.types.ts          # Types and DTOs
 ```
 
@@ -163,21 +162,25 @@ Every endpoint should validate request body, params, and query.
 
 Never trust client input.
 
+All validation schemas must be placed in `src/shared/schemas/`.
+
 ```typescript
-// project.validation.ts
+// src/shared/schemas/project.schema.ts
 import { z } from "zod";
 
 export const createProjectSchema = z.object({
-  name: z.string().min(2).max(200),
-  description: z.string().max(2000).optional(),
-  deadline: z.string().datetime().refine(
-    (date) => new Date(date) > new Date(),
-    { message: "Please select a valid deadline." }
-  ),
-  status: z.enum(["ACTIVE", "COMPLETED", "ON_HOLD"]),
+  body: z.object({
+    name: z.string().min(2).max(200),
+    description: z.string().max(2000).optional(),
+    deadline: z.string().datetime().refine(
+      (date) => new Date(date) > new Date(),
+      { message: "Please select a valid deadline." }
+    ),
+    status: z.enum(["ACTIVE", "COMPLETED", "ON_HOLD"]),
+  })
 });
 
-export type CreateProjectDto = z.infer<typeof createProjectSchema>;
+export type CreateProjectDto = z.infer<typeof createProjectSchema>["body"];
 ```
 
 Use the validate middleware to apply schemas:
@@ -477,7 +480,7 @@ Controllers: `project.controller.ts`
 Services: `project.service.ts`
 Repositories: `project.repository.ts`
 Routes: `project.routes.ts`
-Validation: `project.validation.ts`
+Schemas: `src/shared/schemas/project.schema.ts`
 Types: `project.types.ts`
 
 Functions:

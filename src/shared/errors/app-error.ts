@@ -1,13 +1,18 @@
+export interface FieldError {
+  field?: string;
+  message: string;
+}
+
 export class AppError extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;
-  public readonly errors?: any[];
+  public readonly errors?: FieldError[];
   public readonly instructions?: string[];
 
   constructor(
     message: string,
     statusCode: number,
-    errors?: any[],
+    errors?: FieldError[],
     instructions?: string[],
     isOperational = true
   ) {

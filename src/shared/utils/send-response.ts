@@ -19,7 +19,7 @@ interface SendErrorOptions {
   res: Response;
   message?: string;
   instructions?: string[];
-  errors?: any[];
+  errors?: { field?: string; message: string }[];
 }
 
 export const sendResponse = {
