@@ -18,6 +18,7 @@ interface SendResponseOptions<T = undefined> {
 interface SendErrorOptions {
   res: Response;
   message?: string;
+  instructions?: string[];
   errors?: any[];
 }
 
@@ -60,58 +61,65 @@ export const sendResponse = {
   // Note: Prefer throwing AppErrors over calling these directly
   // ---------------------------------------------------------
 
-  badRequest: ({ res, message = 'Bad request', errors }: SendErrorOptions) => {
+  badRequest: ({ res, message = 'Bad request', instructions, errors }: SendErrorOptions) => {
     return res.status(HTTP_STATUS.BAD_REQUEST).json({
       success: false,
       message,
+      instructions,
       errors,
     });
   },
 
-  unauthorized: ({ res, message = 'Not authenticated', errors }: SendErrorOptions) => {
+  unauthorized: ({ res, message = 'Not authenticated', instructions, errors }: SendErrorOptions) => {
     return res.status(HTTP_STATUS.UNAUTHORIZED).json({
       success: false,
       message,
+      instructions,
       errors,
     });
   },
 
-  forbidden: ({ res, message = 'Permission denied', errors }: SendErrorOptions) => {
+  forbidden: ({ res, message = 'Permission denied', instructions, errors }: SendErrorOptions) => {
     return res.status(HTTP_STATUS.FORBIDDEN).json({
       success: false,
       message,
+      instructions,
       errors,
     });
   },
 
-  notFound: ({ res, message = 'Resource not found', errors }: SendErrorOptions) => {
+  notFound: ({ res, message = 'Resource not found', instructions, errors }: SendErrorOptions) => {
     return res.status(HTTP_STATUS.NOT_FOUND).json({
       success: false,
       message,
+      instructions,
       errors,
     });
   },
 
-  conflict: ({ res, message = 'Resource already exists', errors }: SendErrorOptions) => {
+  conflict: ({ res, message = 'Resource already exists', instructions, errors }: SendErrorOptions) => {
     return res.status(HTTP_STATUS.CONFLICT).json({
       success: false,
       message,
+      instructions,
       errors,
     });
   },
 
-  validationError: ({ res, message = 'Validation failed', errors }: SendErrorOptions) => {
+  validationError: ({ res, message = 'Validation failed', instructions, errors }: SendErrorOptions) => {
     return res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).json({
       success: false,
       message,
+      instructions,
       errors,
     });
   },
 
-  serverError: ({ res, message = 'Internal server error', errors }: SendErrorOptions) => {
+  serverError: ({ res, message = 'Internal server error', instructions, errors }: SendErrorOptions) => {
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message,
+      instructions,
       errors,
     });
   },
