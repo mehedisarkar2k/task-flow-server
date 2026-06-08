@@ -12,6 +12,10 @@ export const updateProfileSchema = z.object({
     location: z.string().max(100).optional(),
     bio: z.string().max(500).optional(),
     skills: z.array(z.string()).max(20).optional(),
+    theme: z.enum(['LIGHT', 'DARK', 'SYSTEM']).optional(),
+    emailSummaries: z.boolean().optional(),
+    mentionAlerts: z.boolean().optional(),
+    marketingUpdates: z.boolean().optional(),
   }),
 });
 

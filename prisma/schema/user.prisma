@@ -17,6 +17,11 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // Notification Preferences
+  emailSummaries   Boolean @default(true)  @map("email_summaries")
+  mentionAlerts    Boolean @default(true)  @map("mention_alerts")
+  marketingUpdates Boolean @default(false) @map("marketing_updates")
+
   // Better Auth Relations
   sessions Session[]
   accounts Account[]

@@ -36,6 +36,38 @@ export const auth = betterAuth({
         required: false,
         defaultValue: 'SYSTEM',
       },
+      jobTitle: {
+        type: 'string',
+        required: false,
+      },
+      department: {
+        type: 'string',
+        required: false,
+      },
+      location: {
+        type: 'string',
+        required: false,
+      },
+      bio: {
+        type: 'string',
+        required: false,
+      },
+      emailSummaries: {
+        type: 'boolean',
+        required: false,
+        defaultValue: true,
+      },
+      mentionAlerts: {
+        type: 'boolean',
+        required: false,
+        defaultValue: true,
+      },
+      marketingUpdates: {
+        type: 'boolean',
+        required: false,
+        defaultValue: false,
+      },
     },
   },
 });
+
