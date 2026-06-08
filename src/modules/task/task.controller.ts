@@ -251,11 +251,19 @@ export const updateTask = catchAsync<UpdateTaskBody>(async (req, res: Response) 
   }
 
   if (body.assigneeIds !== undefined) {
-    // Reassigning a completed task is blocked unless it is also being reopened.
-    const staysCompleted =
-      task.status === 'COMPLETED' && (body.status === undefined || body.status === 'COMPLETED');
-    if (staysCompleted) throw new BadRequestError('Completed tasks cannot be reassigned.');
-    await assertAssigneesAreMembers(task.projectId, body.assigneeIds);
+    const oldIds = new Set(task.assignees.map((a) => a.userId));
+    const newIds = new Set(body.assigneeIds);
+    const assigneesChanged = oldIds.size !== newIds.size || [...newIds].some(id => !oldIds.has(id));
+
+    if (!assigneesChanged) {
+      body.assigneeIds = undefined; // skip processing if nothing changed
+    } else {
+      // Reassigning a completed task is blocked unless it is also being reopened.
+      const staysCompleted =
+        task.status === 'COMPLETED' && (body.status === undefined || body.status === 'COMPLETED');
+      if (staysCompleted) throw new BadRequestError('Completed tasks cannot be reassigned.');
+      await assertAssigneesAreMembers(task.projectId, body.assigneeIds);
+    }
   }
 
   await prisma.$transaction(async (tx) => {

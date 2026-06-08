@@ -19,8 +19,8 @@ import { auth } from '../src/config/auth';
 import { prisma } from '../src/config/prisma';
 import type { Prisma, TaskStatus } from '../generated/prisma';
 
-const PASSWORD = 'Taskflow@2026';
-const DOMAIN = 'taskflow.test'; // seeded accounts use this domain so --reset can find them
+const PASSWORD = 'Ab@12345';
+const DOMAIN = 'taskflow.com'; // seeded accounts use this domain so --reset can find them
 
 // ─── Small random helpers ──────────────────────────────────────────────────
 const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -207,15 +207,14 @@ const MENTION_BODIES = [
 
 const buildBody = (text: string) => `<p>${text}</p>`;
 const buildMentionBody = (template: string, userId: string, name: string) =>
-  `<p>${template.replace('{mention}', `<mention user-id="${userId}">@${name.split(' ')[0]}</mention>`)}</p>`;
+  `<p>${template.replace('{mention}', `<mention data-id="${userId}" data-label="${name.split(' ')[0]}">@${name.split(' ')[0]}</mention>`)}</p>`;
 
 // ─── User creation ──────────────────────────────────────────────────────────
 type SeededUser = { id: string; email: string; name: string; role: string };
 
-async function ensureUser(opts: { firstName: string; lastName: string; role: 'ADMIN' | 'PM' | 'MEMBER'; index: number }): Promise<SeededUser> {
-  const { firstName, lastName, role, index } = opts;
+async function ensureUser(opts: { firstName: string; lastName: string; email: string; role: 'ADMIN' | 'PM' | 'MEMBER' }): Promise<SeededUser> {
+  const { firstName, lastName, email, role } = opts;
   const name = `${firstName} ${lastName}`;
-  const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${index}@${DOMAIN}`;
 
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true, email: true, name: true, role: true } });
   if (existing) return existing;
@@ -329,18 +328,18 @@ async function main() {
     return { firstName: f, lastName: l };
   };
 
-  const admin = await ensureUser({ ...nextName(), role: 'ADMIN', index: 0 });
+  const admin = await ensureUser({ ...nextName(), role: 'ADMIN', email: `admin@${DOMAIN}` });
   const pms: SeededUser[] = [];
-  for (let i = 0; i < 2; i++) pms.push(await ensureUser({ ...nextName(), role: 'PM', index: i }));
+  for (let i = 1; i <= 2; i++) pms.push(await ensureUser({ ...nextName(), role: 'PM', email: `pm${i}@${DOMAIN}` }));
   const members: SeededUser[] = [];
-  for (let i = 0; i < 20; i++) members.push(await ensureUser({ ...nextName(), role: 'MEMBER', index: i }));
+  for (let i = 1; i <= 20; i++) members.push(await ensureUser({ ...nextName(), role: 'MEMBER', email: `user${i}@${DOMAIN}` }));
 
-  console.log(`  1 admin, ${pms.length} PM, ${members.length} members (${2 + pms.length + members.length - 1} total)`);
+  console.log(`  1 admin, ${pms.length} PM, ${members.length} members (${1 + pms.length + members.length} total)`);
 
   const nameById = new Map<string, string>([admin, ...pms, ...members].map((u) => [u.id, u.name]));
 
-  // 2) Lead pool: 2 PMs + 2 senior members → 4 distinct leads across 5 projects.
-  const leadPool: SeededUser[] = [pms[0], pms[1], members[0], members[1]];
+  // 2) Lead pool: Admin + PMs → distinct leads across 5 projects.
+  const leadPool: SeededUser[] = [admin, ...pms];
 
   // 3) Projects + columns + tasks + comments + notifications + activity
   console.log('Creating projects, tasks, comments, notifications, activity…');
