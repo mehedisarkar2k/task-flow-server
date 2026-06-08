@@ -1,6 +1,7 @@
 {
   "name": "task-flow-server",
   "private": true,
+  "type": "module",
   "scripts": {
     "run:dev": "bun --watch src/index.ts",
     "create:admin": "bun run scripts/create-admin.ts",
