@@ -27,9 +27,18 @@ export const validate = (schema: z.ZodSchema) =>
       params?: any; 
     };
 
-    // Re-assign the validated and potentially transformed data back to the request object
+    // Re-assign the validated and potentially transformed data back to the request object.
+    // In Express 5, `req.query` is a getter with no setter, so a plain assignment throws.
+    // We redefine the property with the parsed value instead.
     if (parsedData.body !== undefined) req.body = parsedData.body;
-    if (parsedData.query !== undefined) req.query = parsedData.query as Request['query'];
+    if (parsedData.query !== undefined) {
+      Object.defineProperty(req, 'query', {
+        value: parsedData.query,
+        writable: true,
+        configurable: true,
+        enumerable: true,
+      });
+    }
     if (parsedData.params !== undefined) req.params = parsedData.params as Request['params'];
 
     next();

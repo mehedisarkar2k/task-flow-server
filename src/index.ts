@@ -34,11 +34,12 @@ app.use(express.json());
 // ---------------------------------------------------------
 import { profileRoutes } from './modules/profile/profile.routes';
 import { configRoutes } from './modules/config/config.routes';
+import { projectRoutes } from './modules/project/project.routes';
 
 app.use('/api/config', configRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/projects', projectRoutes);
 
-// app.use("/api/projects", projectRoutes);
 // app.use("/api/tasks", taskRoutes);
 
 // ---------------------------------------------------------
