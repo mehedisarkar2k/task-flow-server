@@ -6,6 +6,9 @@ const projectStatus = z.enum(['ACTIVE', 'COMPLETED', 'ON_HOLD']);
 const projectMemberRole = z.enum(['LEAD', 'MEMBER']);
 const columnColor = z.enum(['muted', 'primary', 'secondary', 'destructive', 'emerald', 'blue']);
 
+// Entity ids are UUIDs; user ids come from Better Auth and are not UUIDs.
+const userId = z.string().min(1).max(64);
+
 const projectIdParams = z.object({
   projectId: z.string().uuid(),
 });
@@ -55,17 +58,17 @@ export const updateProjectSchema = z.object({
 export const addMemberSchema = z.object({
   params: projectIdParams,
   body: z.object({
-    userId: z.string().uuid(),
+    userId,
     projectRole: projectMemberRole.default('MEMBER'),
   }),
 });
 
 export const memberParamsSchema = z.object({
-  params: projectIdParams.extend({ userId: z.string().uuid() }),
+  params: projectIdParams.extend({ userId }),
 });
 
 export const updateMemberRoleSchema = z.object({
-  params: projectIdParams.extend({ userId: z.string().uuid() }),
+  params: projectIdParams.extend({ userId }),
   body: z.object({
     projectRole: projectMemberRole,
   }),

@@ -35,12 +35,13 @@ app.use(express.json());
 import { profileRoutes } from './modules/profile/profile.routes';
 import { configRoutes } from './modules/config/config.routes';
 import { projectRoutes } from './modules/project/project.routes';
+import { taskRoutes, projectTaskRoutes } from './modules/task/task.routes';
 
 app.use('/api/config', configRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/projects/:projectId/tasks', projectTaskRoutes);
 app.use('/api/projects', projectRoutes);
-
-// app.use("/api/tasks", taskRoutes);
+app.use('/api/tasks', taskRoutes);
 
 // ---------------------------------------------------------
 // ERROR HANDLING
