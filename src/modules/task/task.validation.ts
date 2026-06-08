@@ -86,6 +86,16 @@ export const updateTaskStatusSchema = z.object({
   body: z.object({ status: taskStatus }),
 });
 
+// ─── Move (Kanban) ────────────────────────────────────────────────────────────
+
+export const moveTaskSchema = z.object({
+  params: taskIdParams,
+  body: z.object({
+    columnId: z.string().uuid(),
+    position: z.coerce.number().int().min(0),
+  }),
+});
+
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 function startOfToday() {
@@ -99,3 +109,4 @@ export type ListTasksQuery = z.infer<typeof listQuery>;
 export type CreateTaskBody = z.infer<typeof createTaskSchema>['body'];
 export type UpdateTaskBody = z.infer<typeof updateTaskSchema>['body'];
 export type UpdateTaskStatusBody = z.infer<typeof updateTaskStatusSchema>['body'];
+export type MoveTaskBody = z.infer<typeof moveTaskSchema>['body'];

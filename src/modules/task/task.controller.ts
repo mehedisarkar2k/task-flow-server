@@ -23,6 +23,7 @@ import type {
   CreateTaskBody,
   UpdateTaskBody,
   UpdateTaskStatusBody,
+  MoveTaskBody,
 } from './task.validation';
 
 // ─── Internal helpers ────────────────────────────────────────────────────────
@@ -281,6 +282,83 @@ export const updateTaskStatus = catchAsync<UpdateTaskStatusBody>(async (req, res
   await prisma.task.update({
     where: { id: taskId },
     data: await statusSideEffects(task.projectId, status, task.status),
+  });
+
+  const updated = await prisma.task.findUniqueOrThrow({
+    where: { id: taskId },
+    include: taskDetailInclude,
+  });
+
+  sendResponse.success({ res, data: toTaskDetail(updated) });
+});
+
+// ─── Move (Kanban drag-and-drop) ──────────────────────────────────────────────
+
+export const moveTask = catchAsync<MoveTaskBody>(async (req, res: Response) => {
+  const user = req.user!;
+  const { taskId } = req.params as { taskId: string };
+  const { columnId, position } = req.body;
+
+  const task = await loadAccessibleTask(taskId, user);
+  if (!(await canChangeTaskStatus(task, user))) {
+    throw new ForbiddenError("You don't have permission to move this task.");
+  }
+
+  const destColumn = await prisma.boardColumn.findFirst({
+    where: { id: columnId, projectId: task.projectId },
+    select: { id: true, mappedStatus: true },
+  });
+  if (!destColumn) throw new BadRequestError('Target column does not belong to this project.');
+
+  const sourceColumnId = task.columnId;
+
+  await prisma.$transaction(async (tx) => {
+    // Re-sequence the destination column with the moved task inserted at `position`.
+    const destSiblings = await tx.task.findMany({
+      where: { projectId: task.projectId, columnId, deletedAt: null, id: { not: taskId } },
+      orderBy: { position: 'asc' },
+      select: { id: true },
+    });
+    const clamped = Math.min(position, destSiblings.length);
+    const destOrder = [
+      ...destSiblings.slice(0, clamped).map((t) => t.id),
+      taskId,
+      ...destSiblings.slice(clamped).map((t) => t.id),
+    ];
+    await Promise.all(
+      destOrder.map((id, index) =>
+        tx.task.update({ where: { id }, data: { position: index } }),
+      ),
+    );
+
+    // If moving across columns, compact the source column too.
+    if (sourceColumnId && sourceColumnId !== columnId) {
+      const sourceSiblings = await tx.task.findMany({
+        where: {
+          projectId: task.projectId,
+          columnId: sourceColumnId,
+          deletedAt: null,
+          id: { not: taskId },
+        },
+        orderBy: { position: 'asc' },
+        select: { id: true },
+      });
+      await Promise.all(
+        sourceSiblings.map((t, index) =>
+          tx.task.update({ where: { id: t.id }, data: { position: index } }),
+        ),
+      );
+    }
+
+    // Set the new column + status side effects (keeps analytics aligned).
+    const statusData: { completedAt?: Date | null; status?: 'TODO' | 'IN_PROGRESS' | 'COMPLETED' } =
+      {};
+    if (destColumn.mappedStatus && destColumn.mappedStatus !== task.status) {
+      statusData.status = destColumn.mappedStatus;
+      if (destColumn.mappedStatus === 'COMPLETED') statusData.completedAt = new Date();
+      else if (task.status === 'COMPLETED') statusData.completedAt = null;
+    }
+    await tx.task.update({ where: { id: taskId }, data: { columnId, ...statusData } });
   });
 
   const updated = await prisma.task.findUniqueOrThrow({

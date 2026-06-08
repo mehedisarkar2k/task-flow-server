@@ -8,6 +8,7 @@ import {
   taskIdParamsSchema,
   updateTaskSchema,
   updateTaskStatusSchema,
+  moveTaskSchema,
 } from './task.validation';
 import {
   listTasks,
@@ -16,6 +17,7 @@ import {
   getTask,
   updateTask,
   updateTaskStatus,
+  moveTask,
   deleteTask,
 } from './task.controller';
 
@@ -27,6 +29,7 @@ router.get('/', validate(listTasksSchema), listTasks);
 router.get('/:taskId', validate(taskIdParamsSchema), getTask);
 router.put('/:taskId', validate(updateTaskSchema), updateTask);
 router.patch('/:taskId/status', validate(updateTaskStatusSchema), updateTaskStatus);
+router.patch('/:taskId/move', validate(moveTaskSchema), moveTask);
 router.delete('/:taskId', validate(taskIdParamsSchema), deleteTask);
 
 export const taskRoutes = router;
