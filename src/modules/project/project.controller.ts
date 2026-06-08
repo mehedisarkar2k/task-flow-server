@@ -3,7 +3,7 @@ import type { Prisma } from '../../../generated/prisma';
 import { prisma } from '../../config/prisma';
 import { catchAsync } from '../../shared/utils/catch-async';
 import { sendResponse } from '../../shared/utils/send-response';
-import { ForbiddenError } from '../../shared/errors/custom-errors';
+import { BadRequestError, ForbiddenError } from '../../shared/errors/custom-errors';
 import {
   buildProjectScopeWhere,
   assertProjectAccess,
@@ -109,7 +109,36 @@ export const listProjects = catchAsync(async (req, res: Response) => {
 
 export const createProject = catchAsync<CreateProjectBody>(async (req, res: Response) => {
   const user = req.user!;
-  const { name, description, deadline, status } = req.body;
+  const { name, description, deadline, status, pmId, leadId } = req.body;
+
+  // Only ADMIN and PM may create projects; members never do.
+  if (user.role !== 'ADMIN' && user.role !== 'PM') {
+    throw new ForbiddenError("You don't have permission to create projects.");
+  }
+
+  // Resolve the project's manager (PM):
+  //   - ADMIN picks a PM explicitly (must be a PM-role user).
+  //   - PM creators manage their own project, so they are the PM.
+  let managerId: string;
+  if (user.role === 'ADMIN') {
+    if (!pmId) throw new BadRequestError('Please choose a project manager (PM).');
+    const pm = await prisma.user.findUnique({ where: { id: pmId }, select: { role: true } });
+    if (!pm) throw new BadRequestError('Selected project manager was not found.');
+    if (pm.role !== 'PM') throw new BadRequestError('The project manager must be a PM.');
+    managerId = pmId;
+  } else {
+    managerId = user.id;
+  }
+
+  // Validate the chosen team lead exists.
+  const lead = await prisma.user.findUnique({ where: { id: leadId }, select: { id: true } });
+  if (!lead) throw new BadRequestError('Selected team lead was not found.');
+
+  // Build the membership set: the PM is a member (manager via createdBy), the
+  // lead carries the LEAD role. If the same person is both, LEAD wins.
+  const roleByUser = new Map<string, 'LEAD' | 'MEMBER'>();
+  roleByUser.set(managerId, 'MEMBER');
+  roleByUser.set(leadId, 'LEAD');
 
   const project = await prisma.project.create({
     data: {
@@ -117,13 +146,24 @@ export const createProject = catchAsync<CreateProjectBody>(async (req, res: Resp
       description,
       deadline,
       status,
-      createdBy: user.id,
-      // Creator is automatically a project LEAD.
-      members: { create: { userId: user.id, role: 'LEAD' } },
+      // The PM owns the project (drives PM manage permissions).
+      createdBy: managerId,
+      members: {
+        create: [...roleByUser.entries()].map(([userId, role]) => ({ userId, role })),
+      },
       // Seed the default Kanban columns mapped to task statuses.
       columns: { create: DEFAULT_COLUMNS },
     },
     include: { creator: { select: { id: true, name: true } } },
+  });
+
+  // Notify the assigned PM and lead they were added (actor excluded internally).
+  await sendNotifications([managerId, leadId], {
+    actorId: user.id,
+    type: 'PROJECT_MEMBER_ADDED',
+    entityType: 'PROJECT',
+    entityId: project.id,
+    message: `"${user.name}" added you to project "${project.name}".`,
   });
 
   sendResponse.created({

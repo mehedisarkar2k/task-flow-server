@@ -33,6 +33,11 @@ export const createProjectSchema = z.object({
       message: 'Please select a future deadline.',
     }),
     status: projectStatus.default('ACTIVE'),
+    // The project's manager (PM). Required when an ADMIN creates the project;
+    // ignored for a PM creator (they become the PM of their own project).
+    pmId: userId.optional(),
+    // The project's team lead — required for everyone.
+    leadId: userId,
   }),
 });
 

@@ -60,18 +60,30 @@ export const loadAccessibleTask = async (
   return task;
 };
 
-/** ADMIN or PM (creator/member of the project) may fully manage a task. */
+/**
+ * Who may fully manage a task (create / edit / delete):
+ *   - ADMIN — anywhere
+ *   - the project's LEAD — regardless of their global role
+ *   - a PM who created or belongs to the project
+ */
 export const canManageTask = async (projectId: string, user: SessionUser) => {
   if (user.role === 'ADMIN') return true;
-  if (user.role !== 'PM') return false;
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
-    include: { members: { select: { userId: true } } },
+    include: { members: { select: { userId: true, role: true } } },
   });
   if (!project) return false;
 
-  return project.createdBy === user.id || project.members.some((m) => m.userId === user.id);
+  const membership = project.members.find((m) => m.userId === user.id);
+
+  // Project leads can manage their project's tasks even if they are MEMBER globally.
+  if (membership?.role === 'LEAD') return true;
+
+  // PMs manage projects they created or belong to.
+  if (user.role === 'PM' && (project.createdBy === user.id || !!membership)) return true;
+
+  return false;
 };
 
 /**

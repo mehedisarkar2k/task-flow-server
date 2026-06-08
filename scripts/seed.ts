@@ -241,11 +241,23 @@ async function ensureUser(opts: { firstName: string; lastName: string; email: st
 }
 
 // ─── Reset ──────────────────────────────────────────────────────────────────
+// Purge every account this seed could have created in any prior run — including
+// the legacy `taskflow.test` domain — so re-seeding always yields one clean set
+// instead of accumulating duplicates.
+const SEED_DOMAINS = ['taskflow.com', 'taskflow.test'];
+
 async function resetSeededData() {
-  const seededUsers = await prisma.user.findMany({ where: { email: { endsWith: `@${DOMAIN}` } }, select: { id: true } });
+  const seededUsers = await prisma.user.findMany({
+    where: { OR: SEED_DOMAINS.map((d) => ({ email: { endsWith: `@${d}` } })) },
+    select: { id: true },
+  });
   const ids = seededUsers.map((u) => u.id);
   if (!ids.length) return;
 
+  // Order matters: Project.creator is a restrict relation, so projects must go
+  // before their creators. Deleting a project cascades its columns/tasks/
+  // comments/members/assignees/activities.
+  const { count: projectCount } = await prisma.project.deleteMany({ where: { createdBy: { in: ids } } });
   // Notifications don't cascade from projects (entityId is a plain string), so
   // remove anything addressed to or raised by a seeded user explicitly.
   const { count: notifCount } = await prisma.notification.deleteMany({
@@ -253,9 +265,11 @@ async function resetSeededData() {
   });
   // Activity logs cascade from project/actor, but null-project rows would linger.
   await prisma.activityLog.deleteMany({ where: { actorId: { in: ids } } });
-  // Projects cascade their columns/tasks/comments/members/assignees/activities.
-  const { count } = await prisma.project.deleteMany({ where: { createdBy: { in: ids } } });
-  console.log(`  reset: deleted ${count} project(s) (cascade) + ${notifCount} notification(s)`);
+  // Finally the users themselves (account/session cascade) — this is what makes
+  // re-seeding idempotent rather than additive.
+  const { count: userCount } = await prisma.user.deleteMany({ where: { id: { in: ids } } });
+
+  console.log(`  reset: removed ${userCount} user(s), ${projectCount} project(s), ${notifCount} notification(s)`);
 }
 
 // ─── Notification timing/state helper ────────────────────────────────────────

@@ -42,6 +42,7 @@ import { notificationRoutes } from './modules/notification/notification.routes';
 import { commentRoutes } from './modules/comment/comment.routes';
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes';
 import { activityRoutes } from './modules/activity/activity.routes';
+import { searchRoutes } from './modules/search/search.routes';
 
 app.use('/api/config', configRoutes);
 app.use('/api/profile', profileRoutes);
@@ -54,6 +55,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/activities', activityRoutes);
+app.use('/api/search', searchRoutes);
 
 // ---------------------------------------------------------
 // ERROR HANDLING
