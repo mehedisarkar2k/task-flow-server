@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "NODE_ENV=production bun build ./src/index.ts --outdir ./dist --target bun --packages=external --minify",
+    "build": "NODE_ENV=production bun build ./src/index.ts --outdir ./dist --target bun --external @better-auth/kysely-adapter --external kysely --external bun:sqlite --minify",
     "run:dev": "bun --watch src/index.ts",
     "create:admin": "bun run scripts/create-admin.ts",
     "seed": "bun run scripts/seed.ts",
