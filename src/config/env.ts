@@ -20,6 +20,14 @@ const envSchema = z.object({
   S3_END_POINT: z.string().url(),
   CF_PUBLIC_URL: z.string().url(),
   BUCKET_NAME: z.string().min(1),
+
+  // Azure OpenAI (assistant / chatbot)
+  AZURE_OPENAI_API_KEY: z.string().min(1),
+  AZURE_OPENAI_ENDPOINT: z.string().url(),
+  AZURE_OPENAI_API_VERSION: z.string().min(1).default('2025-04-01-preview'),
+  AZURE_OPENAI_MODEL: z.string().min(1), // deployment used for the assistant
+  AZURE_OPENAI_MINI_MODEL: z.string().min(1).optional(),
+  AZURE_OPENAI_NANO_MODEL: z.string().min(1).optional(),
 });
 
 export const env = envSchema.parse(process.env);
