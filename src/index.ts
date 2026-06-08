@@ -39,15 +39,21 @@ import { taskRoutes, projectTaskRoutes } from './modules/task/task.routes';
 import { teamRoutes } from './modules/team/team.routes';
 import { userRoutes } from './modules/user/user.routes';
 import { notificationRoutes } from './modules/notification/notification.routes';
+import { commentRoutes } from './modules/comment/comment.routes';
+import { dashboardRoutes } from './modules/dashboard/dashboard.routes';
+import { activityRoutes } from './modules/activity/activity.routes';
 
 app.use('/api/config', configRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/projects/:projectId/tasks', projectTaskRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/tasks/:taskId/comments', commentRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/team', teamRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/activities', activityRoutes);
 
 // ---------------------------------------------------------
 // ERROR HANDLING
