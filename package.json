@@ -1,12 +1,11 @@
 {
   "name": "task-flow-server",
-  "module": "src/index.ts",
-  "type": "module",
   "private": true,
   "scripts": {
     "run:dev": "bun --watch src/index.ts",
     "create:admin": "bun run scripts/create-admin.ts",
-    "seed": "bun run scripts/seed.ts"
+    "seed": "bun run scripts/seed.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1063.0",

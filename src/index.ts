@@ -1,8 +1,6 @@
 import cors from 'cors';
-import 'dotenv/config';
 import express from 'express';
 import helmet from 'helmet';
-import { toNodeHandler } from 'better-auth/node';
 
 import { env } from './config/env';
 import { auth } from './config/auth';
@@ -25,9 +23,23 @@ app.use(
 // parser consuming the request stream first.
 // Express v5 requires {*any} wildcard syntax.
 // ---------------------------------------------------------
-app.all('/api/auth/{*any}', toNodeHandler(auth));
+app.all('/api/auth/{*any}', async (req, res, next) => {
+  try {
+    const { toNodeHandler } = await import('better-auth/node');
+    return toNodeHandler(auth)(req, res);
+  } catch (err) {
+    next(err);
+  }
+});
 
 app.use(express.json());
+
+// ---------------------------------------------------------
+// HEALTH CHECK
+// ---------------------------------------------------------
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'TaskFlow Server is running!' });
+});
 
 // ---------------------------------------------------------
 // API ROUTES
@@ -65,6 +77,12 @@ app.use('/api/assistant', assistantRoutes);
 app.use(notFoundHandler);
 app.use(globalErrorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Only start the server locally. Vercel will handle the routing via serverless functions
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
+
+// Export the app for Vercel Serverless Functions
+export default app;
