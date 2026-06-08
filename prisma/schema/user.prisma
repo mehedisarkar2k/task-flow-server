@@ -11,6 +11,7 @@ model User {
   jobTitle      String?  @map("job_title")
   department    String?
   location      String?
+  phone         String?
   bio           String?  @db.Text
   skills        String[]
 

@@ -48,6 +48,10 @@ export const auth = betterAuth({
         type: 'string',
         required: false,
       },
+      phone: {
+        type: 'string',
+        required: false,
+      },
       bio: {
         type: 'string',
         required: false,

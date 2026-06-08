@@ -10,6 +10,7 @@ export const updateProfileSchema = z.object({
     jobTitle: z.string().max(100).optional(),
     department: z.string().max(100).optional(),
     location: z.string().max(100).optional(),
+    phone: z.string().max(30).optional(),
     bio: z.string().max(500).optional(),
     skills: z.array(z.string()).max(20).optional(),
     theme: z.enum(['LIGHT', 'DARK', 'SYSTEM']).optional(),
