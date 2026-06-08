@@ -1,0 +1,26 @@
+model Comment {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  userId    String   @map("user_id")
+  body      String   @db.Text
+  isEdited  Boolean  @default(false) @map("is_edited")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  task     Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions CommentVersion[]
+
+  @@map("comment")
+}
+
+model CommentVersion {
+  id        String   @id @default(uuid())
+  commentId String   @map("comment_id")
+  body      String   @db.Text
+  editedAt  DateTime @default(now()) @map("edited_at")
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@map("comment_version")
+}

@@ -1,0 +1,62 @@
+enum Role {
+  ADMIN
+  PM
+  MEMBER
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ON_HOLD
+}
+
+enum ProjectMemberRole {
+  LEAD
+  MEMBER
+}
+
+enum TaskPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum NotificationEntityType {
+  TASK
+  PROJECT
+  COMMENT
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_UNASSIGNED
+  TASK_STATUS_CHANGED
+  TASK_OVERDUE
+  TASK_DUE_SOON
+  COMMENT_ADDED
+  COMMENT_MENTION
+  PROJECT_MEMBER_ADDED
+  PROJECT_MEMBER_REMOVED
+  PROJECT_STATUS_CHANGED
+  PROJECT_DEADLINE_APPROACHING
+  ATTACHMENT_UPLOADED
+}
+
+enum ActivityEntityType {
+  TASK
+  PROJECT
+  COMMENT
+  ATTACHMENT
+}

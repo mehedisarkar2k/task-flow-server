@@ -1,0 +1,49 @@
+model Project {
+  id          String        @id @default(uuid())
+  name        String
+  description String?       @db.Text
+  deadline    DateTime?     @db.Date
+  status      ProjectStatus @default(ACTIVE)
+  createdBy   String        @map("created_by")
+  deletedAt   DateTime?     @map("deleted_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  creator     User            @relation("ProjectCreator", fields: [createdBy], references: [id])
+  members     ProjectMember[]
+  columns     BoardColumn[]
+  tasks       Task[]
+  attachments Attachment[]
+  activities  ActivityLog[]
+
+  @@map("project")
+}
+
+model ProjectMember {
+  projectId String            @map("project_id")
+  userId    String            @map("user_id")
+  role      ProjectMemberRole @default(MEMBER)
+  addedAt   DateTime          @default(now()) @map("added_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+  @@map("project_member")
+}
+
+model BoardColumn {
+  id           String      @id @default(uuid())
+  projectId    String      @map("project_id")
+  name         String
+  color        String
+  position     Int
+  mappedStatus TaskStatus? @map("mapped_status")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks   Task[]
+
+  @@map("board_column")
+}

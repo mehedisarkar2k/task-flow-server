@@ -1,0 +1,34 @@
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false) @map("email_verified")
+  image         String?
+  role          Role     @default(MEMBER)
+  theme         Theme    @default(SYSTEM)
+  jobTitle      String?  @map("job_title")
+  department    String?
+  location      String?
+  bio           String?  @db.Text
+  skills        String[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Better Auth Relations
+  sessions Session[]
+  accounts Account[]
+
+  // TaskFlow Relations
+  projectsCreated        Project[]       @relation("ProjectCreator")
+  tasksCreated           Task[]          @relation("TaskCreator")
+  memberships            ProjectMember[]
+  taskAssignments        TaskAssignee[]
+  comments               Comment[]
+  attachments            Attachment[]
+  activities             ActivityLog[]
+  notifications          Notification[]
+  notificationsTriggered Notification[]  @relation("NotificationActor")
+
+  @@map("user")
+}
