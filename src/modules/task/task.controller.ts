@@ -25,6 +25,7 @@ import type {
   UpdateTaskStatusBody,
   MoveTaskBody,
 } from './task.validation';
+import { sendNotifications } from '../notification/notification.service';
 
 // ─── Internal helpers ────────────────────────────────────────────────────────
 
@@ -187,6 +188,16 @@ export const createTask = catchAsync<CreateTaskBody>(async (req, res: Response) 
     include: taskListInclude,
   });
 
+  if (body.assigneeIds && body.assigneeIds.length > 0) {
+    await sendNotifications(body.assigneeIds, {
+      actorId: user.id,
+      type: 'TASK_ASSIGNED',
+      entityType: 'TASK',
+      entityId: task.id,
+      message: `"${user.name}" assigned you to task "${task.title}".`,
+    });
+  }
+
   sendResponse.created({ res, message: 'Task created successfully.', data: toTaskListItem(task) });
 });
 
@@ -264,6 +275,47 @@ export const updateTask = catchAsync<UpdateTaskBody>(async (req, res: Response) 
     include: taskDetailInclude,
   });
 
+  if (body.assigneeIds !== undefined) {
+    const oldIds = new Set(task.assignees.map((a) => a.userId));
+    const newIds = new Set(body.assigneeIds);
+    const added = body.assigneeIds.filter((id) => !oldIds.has(id));
+    const removed = task.assignees.map((a) => a.userId).filter((id) => !newIds.has(id));
+
+    if (added.length > 0) {
+      await sendNotifications(added, {
+        actorId: user.id,
+        type: 'TASK_ASSIGNED',
+        entityType: 'TASK',
+        entityId: task.id,
+        message: `"${user.name}" assigned you to task "${updated.title}".`,
+      });
+    }
+    if (removed.length > 0) {
+      await sendNotifications(removed, {
+        actorId: user.id,
+        type: 'TASK_UNASSIGNED',
+        entityType: 'TASK',
+        entityId: task.id,
+        message: `"${user.name}" unassigned you from task "${updated.title}".`,
+      });
+    }
+  }
+
+  if (body.status !== undefined && body.status !== task.status) {
+    const pms = await prisma.projectMember.findMany({
+      where: { projectId: task.projectId, role: 'LEAD' },
+      select: { userId: true },
+    });
+    const recipients = [task.createdBy, ...pms.map((pm) => pm.userId)];
+    await sendNotifications(recipients, {
+      actorId: user.id,
+      type: 'TASK_STATUS_CHANGED',
+      entityType: 'TASK',
+      entityId: task.id,
+      message: `"${user.name}" changed "${updated.title}" status to ${body.status}.`,
+    });
+  }
+
   sendResponse.success({ res, message: 'Task updated successfully.', data: toTaskDetail(updated) });
 });
 
@@ -288,6 +340,21 @@ export const updateTaskStatus = catchAsync<UpdateTaskStatusBody>(async (req, res
     where: { id: taskId },
     include: taskDetailInclude,
   });
+
+  if (status !== task.status) {
+    const pms = await prisma.projectMember.findMany({
+      where: { projectId: task.projectId, role: 'LEAD' },
+      select: { userId: true },
+    });
+    const recipients = [task.createdBy, ...pms.map((pm) => pm.userId)];
+    await sendNotifications(recipients, {
+      actorId: user.id,
+      type: 'TASK_STATUS_CHANGED',
+      entityType: 'TASK',
+      entityId: task.id,
+      message: `"${user.name}" changed "${updated.title}" status to ${status}.`,
+    });
+  }
 
   sendResponse.success({ res, data: toTaskDetail(updated) });
 });
@@ -365,6 +432,21 @@ export const moveTask = catchAsync<MoveTaskBody>(async (req, res: Response) => {
     where: { id: taskId },
     include: taskDetailInclude,
   });
+
+  if (updated.status !== task.status) {
+    const pms = await prisma.projectMember.findMany({
+      where: { projectId: task.projectId, role: 'LEAD' },
+      select: { userId: true },
+    });
+    const recipients = [task.createdBy, ...pms.map((pm) => pm.userId)];
+    await sendNotifications(recipients, {
+      actorId: user.id,
+      type: 'TASK_STATUS_CHANGED',
+      entityType: 'TASK',
+      entityId: task.id,
+      message: `"${user.name}" changed "${updated.title}" status to ${updated.status}.`,
+    });
+  }
 
   sendResponse.success({ res, data: toTaskDetail(updated) });
 });

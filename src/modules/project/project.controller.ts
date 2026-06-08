@@ -15,6 +15,7 @@ import type {
   CreateProjectBody,
   UpdateProjectBody,
 } from './project.validation';
+import { sendNotifications } from '../notification/notification.service';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -195,7 +196,7 @@ export const updateProject = catchAsync<UpdateProjectBody>(async (req, res: Resp
   const { projectId } = req.params as { projectId: string };
   const { name, description, deadline, status } = req.body;
 
-  await assertProjectManage(projectId, user);
+  const project = await assertProjectManage(projectId, user);
 
   const updated = await prisma.project.update({
     where: { id: projectId },
@@ -205,8 +206,19 @@ export const updateProject = catchAsync<UpdateProjectBody>(async (req, res: Resp
       ...(deadline !== undefined ? { deadline } : {}),
       ...(status !== undefined ? { status } : {}),
     },
-    include: { creator: { select: { id: true, name: true } } },
+    include: { creator: { select: { id: true, name: true } }, members: { select: { userId: true } } },
   });
+
+  if (status !== undefined && status !== project.status) {
+    const recipients = updated.members.map((m) => m.userId);
+    await sendNotifications(recipients, {
+      actorId: user.id,
+      type: 'PROJECT_STATUS_CHANGED',
+      entityType: 'PROJECT',
+      entityId: projectId,
+      message: `"${user.name}" changed project "${updated.name}" status to ${status}.`,
+    });
+  }
 
   sendResponse.success({
     res,

@@ -5,6 +5,7 @@ import { sendResponse } from '../../shared/utils/send-response';
 import { BadRequestError, NotFoundError } from '../../shared/errors/custom-errors';
 import { assertProjectAccess, assertProjectManage } from './project.access';
 import type { AddMemberBody, UpdateMemberRoleBody } from './project.validation';
+import { sendNotifications } from '../notification/notification.service';
 
 // ─── List members ─────────────────────────────────────────────────────────────
 
@@ -72,6 +73,17 @@ export const addMember = catchAsync<AddMemberBody>(async (req, res: Response) =>
     data: { projectId, userId, role: projectRole },
   });
 
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (project) {
+    await sendNotifications([userId], {
+      actorId: user.id,
+      type: 'PROJECT_MEMBER_ADDED',
+      entityType: 'PROJECT',
+      entityId: projectId,
+      message: `"${user.name}" added you to project "${project.name}".`,
+    });
+  }
+
   sendResponse.created({
     res,
     message: 'Member added to project.',
@@ -110,6 +122,14 @@ export const removeMember = catchAsync(async (req, res: Response) => {
 
   await prisma.projectMember.delete({
     where: { projectId_userId: { projectId, userId } },
+  });
+
+  await sendNotifications([userId], {
+    actorId: user.id,
+    type: 'PROJECT_MEMBER_REMOVED',
+    entityType: 'PROJECT',
+    entityId: projectId,
+    message: `"${user.name}" removed you from project "${project.name}".`,
   });
 
   sendResponse.deleted({ res, message: 'Member removed from project.' });
