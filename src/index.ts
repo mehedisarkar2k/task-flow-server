@@ -4,16 +4,17 @@ import express from 'express';
 import helmet from 'helmet';
 import { toNodeHandler } from 'better-auth/node';
 
+import { env } from './config/env';
 import { auth } from './config/auth';
 import { globalErrorHandler, notFoundHandler } from './middleware/error.middleware';
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = env.PORT;
 
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: env.CORS_ORIGIN,
     credentials: true, // Needed for Better Auth cookies
   })
 );
@@ -29,8 +30,14 @@ app.all('/api/auth/{*any}', toNodeHandler(auth));
 app.use(express.json());
 
 // ---------------------------------------------------------
-// API ROUTES (To be implemented)
+// API ROUTES
 // ---------------------------------------------------------
+import { profileRoutes } from './modules/profile/profile.routes';
+import { configRoutes } from './modules/config/config.routes';
+
+app.use('/api/config', configRoutes);
+app.use('/api/profile', profileRoutes);
+
 // app.use("/api/projects", projectRoutes);
 // app.use("/api/tasks", taskRoutes);
 

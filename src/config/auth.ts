@@ -1,9 +1,10 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { prisma } from './prisma';
+import { env } from './env';
 
 export const auth = betterAuth({
-  trustedOrigins: [process.env.CORS_ORIGIN || 'http://localhost:3000'],
+  trustedOrigins: [env.CORS_ORIGIN],
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
@@ -17,6 +18,14 @@ export const auth = betterAuth({
   },
   user: {
     additionalFields: {
+      firstName: {
+        type: 'string',
+        required: false,
+      },
+      lastName: {
+        type: 'string',
+        required: false,
+      },
       role: {
         type: 'string',
         required: false,
