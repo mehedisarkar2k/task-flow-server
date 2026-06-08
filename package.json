@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "run:dev": "bun --watch src/index.ts",
-    "create:admin": "bun run scripts/create-admin.ts"
+    "create:admin": "bun run scripts/create-admin.ts",
+    "seed": "bun run scripts/seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1063.0",
